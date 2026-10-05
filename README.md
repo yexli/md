@@ -147,6 +147,53 @@ import.meta.glob('/md/**/*.{md,markdown}', { query: '?raw', import: 'default', e
 
 ---
 
+## 部署
+
+构建产物是纯静态文件，`npm run build` 之后把 `dist/` 里的内容发布出去即可，服务器上不需要 Node。
+
+### 托管平台（连仓库，push 自动部署）
+
+Cloudflare Pages、Vercel、Netlify、腾讯云 EdgeOne Pages 都可以，构建配置统一填：
+
+| 配置项 | 值 |
+| --- | --- |
+| 构建命令 | `npm run build` |
+| 输出目录 | `dist` |
+| Node 版本 | 由 `.nvmrc` 决定（22） |
+
+### 静态服务器 / 对象存储
+
+本地构建后上传 `dist/` 内容到腾讯云 COS、阿里云 OSS（开启静态网站模式）或 Nginx：
+
+```bash
+npm run build
+# 把 dist/ 里的 index.html、assets/、md/ 原样传到站点根目录
+```
+
+### GitHub Pages
+
+仓库 Settings → Pages → Source 选择 `GitHub Actions`，之后推送到 `main` 即自动部署（见 `.github/workflows/deploy.yml`）。
+
+> 部署到 `https://<用户名>.github.io/<仓库名>/` 属于子路径，构建时必须指定 `base`。
+> 工作流已通过 `configure-pages` 自动取到仓库路径，本地构建不受影响。
+
+### 部署到子路径
+
+手工构建时用 `--base` 指定：
+
+```bash
+npm run build -- --base=/wiki/
+```
+
+图片路径会自动跟着 `base` 变化，不需要改代码。
+
+### 加文档之后
+
+`/md/` 的内容在**构建时**打包进 JS，所以云端加文档必须重新部署一次：
+本地改完 push（触发平台重新构建），或重新 `npm run build` 后覆盖上传 `dist/`。
+
+---
+
 ## 说明
 
 - 文档内容会在构建时打包进 JS，适合个人到中小团队的文档规模；如果 `/md/` 长到几十 MB，再考虑改成按需加载

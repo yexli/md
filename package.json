@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "轻量级本地 Markdown Wiki 阅读器：读取 /md/ 目录，生成 Wiki 阅读界面",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
