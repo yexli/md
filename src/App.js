@@ -9,6 +9,7 @@ import { readDocFromUrl, currentDocUrl } from './utils/wikiUrl.js';
 import { createSidebar } from './components/sidebar.js';
 import { createViewer } from './components/markdownViewer.js';
 import { createSearch } from './components/search.js';
+import { createToc } from './components/toc.js';
 import { copyWithFeedback } from './components/copyButton.js';
 
 const LAST_DOC_KEY = 'wiki:last-doc';
@@ -66,6 +67,7 @@ export function startApp() {
 
     const tree = buildTree(docs);
     const viewer = createViewer({ onOpenDoc: (id) => openDoc(id) });
+    const toc = createToc();
     const sidebar = createSidebar({ tree, onSelect: (id) => openDoc(id) });
     createSearch({ docs, onSelect: (id) => openDoc(id) });
 
@@ -75,6 +77,8 @@ export function startApp() {
       currentId = id || '';
       if (doc) {
         viewer.show(doc);
+        toc.update(docEl);
+        toc.restoreHash(docEl);
         sidebar.setActive(doc.id);
         try {
           localStorage.setItem(LAST_DOC_KEY, doc.id);
@@ -84,6 +88,7 @@ export function startApp() {
         return;
       }
       sidebar.setActive('');
+      toc.clear();
       if (!docs.length) viewer.showEmptyLibrary();
       else viewer.showMissing(id);
     }

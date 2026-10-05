@@ -18,5 +18,6 @@ export function docHref(id) {
 export function currentDocUrl(id) {
   const url = new URL(window.location.href);
   url.search = docSearch(id);
+  url.hash = '';
   return url;
 }

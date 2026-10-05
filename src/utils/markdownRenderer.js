@@ -99,6 +99,33 @@ md.renderer.rules.link_open = (tokens, idx, options, env, self) => {
   return defaultLinkOpen(tokens, idx, options, env, self);
 };
 
+/**
+ * 由标题文本生成锚点 id：保留中英文和数字，空白转连字符，重复标题自动加序号。
+ * 计数放在 env 上，每次渲染互不影响。
+ */
+function createSlug(text, env) {
+  const counts = env.slugCounts || (env.slugCounts = new Map());
+  const base = String(text)
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\p{L}\p{N}\-_]/gu, '')
+    .slice(0, 80) || 'section';
+  const seen = counts.get(base) || 0;
+  counts.set(base, seen + 1);
+  return seen === 0 ? base : base + '-' + (seen + 1);
+}
+
+// 标题：加上 id，右侧大纲和分享链接都靠它定位
+md.renderer.rules.heading_open = (tokens, idx, options, env, self) => {
+  const token = tokens[idx];
+  const inline = tokens[idx + 1];
+  if (inline && inline.type === 'inline') {
+    token.attrSet('id', createSlug(inline.content, env));
+  }
+  return self.renderToken(tokens, idx, options);
+};
+
 // 表格：包一层容器，窄屏时允许横向滚动而不是把页面撑破
 md.renderer.rules.table_open = () => '<div class="table-wrap"><table>';
 md.renderer.rules.table_close = () => '</table></div>';
