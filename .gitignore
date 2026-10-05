@@ -2,3 +2,7 @@ node_modules/
 dist/
 .vite/
 *.local
+
+# 本地生成的部署包
+*.zip
+*.tar.gz
