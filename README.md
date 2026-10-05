@@ -216,6 +216,46 @@ npm run build -- --base=/wiki/
 
 图片路径会自动跟着 `base` 变化，不需要改代码。
 
+### 与 GitHub 保持同步
+
+改造之后，**日常只需要同步 `md/` 目录**——它是运行时读取的，同步完刷新页面就生效，不需要构建，也不需要重启任何服务。界面代码（`index.html` / `assets/`）是构建产物，只在改 `src/` 时才需要重新生成。
+
+在服务器上克隆一份仓库（放在站点目录之外）：
+
+```bash
+cd /www/wwwroot
+git clone git@github.com:yexli/agent-plan.git agent-plan
+```
+
+仓库是私有的，需要在服务器上配一把只读部署密钥：
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/wiki_deploy -N "" -C "md.oneyer.cc"
+cat ~/.ssh/wiki_deploy.pub
+```
+
+把输出的公钥贴到仓库 **Settings → Deploy keys → Add deploy key**（不要勾选 Allow write access），然后在服务器 `~/.ssh/config` 里加：
+
+```text
+Host github.com
+  IdentityFile ~/.ssh/wiki_deploy
+  IdentitiesOnly yes
+```
+
+接着把 [deploy/sync-wiki.sh](deploy/sync-wiki.sh) 放到服务器上（例如 `/www/wwwroot/sync-wiki.sh`），给执行权限，然后建一个宝塔计划任务定时跑它：
+
+```bash
+chmod +x /www/wwwroot/sync-wiki.sh
+/www/wwwroot/sync-wiki.sh
+```
+
+宝塔 → **计划任务** → 添加任务 → 类型 `Shell 脚本` → 周期按需要（比如每 5 分钟）→ 内容填 `/www/wwwroot/sync-wiki.sh`。
+
+之后你在本地改完文档，`git push` 一提交，服务器到点自动更新；想立刻生效就在计划任务里点一次「执行」。
+
+**首次部署时** `index.html` 和 `assets/` 还得手动传一次（它们是构建产物，不在仓库里）。如果希望服务器连界面代码也自动重建，在服务器上装 Node（宝塔软件商店 → Node 版本管理器），然后把脚本末尾那几行注释打开。
+
+---
 ### 加文档之后
 
 | 场景 | 做法 |
