@@ -1,19 +1,28 @@
 /**
- * 文档发现与索引。
+ * 文档发现。
  *
- * 数据源永远是项目根目录下的 /md/，不经过数据库、不经过后端接口。
- * 通过 Vite 的 glob 导入在构建（或开发服务器启动）阶段把文件内容读进模块，
- * 因此往 /md/ 里新增一个 .md 文件后刷新页面，它就会自动出现在菜单里。
+ * 两种数据来源，优先用第一种：
+ *
+ * 1. 运行时目录列表 —— 服务器返回 /md/ 的目录 JSON 时直接读取。
+ *    这样往服务器 md/ 目录里丢 .md 文件、刷新页面就生效，不需要重新构建。
+ *    服务端只需要一行 nginx 配置：autoindex on; autoindex_format json;
+ * 2. 构建期快照 —— 没有目录列表（对象存储、GitHub Pages 等纯静态托管）时，
+ *    回退到 npm run build 时读进 JS 的那份文档。
+ *
+ * 两条路都拿不到时，显示「暂无 Markdown 文档」。
  */
 
-const RAW_DOCS = import.meta.glob('/md/**/*.{md,markdown}', {
+const MD_BASE = import.meta.env.BASE_URL + 'md/';
+const MD_EXT_RE = /\.(md|markdown)$/i;
+
+/** 同时打开的文档请求数，避免文档多时一次性打满连接 */
+const FETCH_CONCURRENCY = 8;
+
+const BUNDLED_DOCS = import.meta.glob('/md/**/*.{md,markdown}', {
   query: '?raw',
   import: 'default',
   eager: true,
 });
-
-const MD_PREFIX = '/md/';
-const MD_EXT_RE = /\.(md|markdown)$/i;
 
 /** 中文优先的自然排序（文件名里的数字按数值比较） */
 const collator = new Intl.Collator('zh-Hans-CN', { numeric: true, sensitivity: 'base' });
@@ -44,35 +53,128 @@ export function extractTitle(content) {
   return '';
 }
 
-/** '/md/Agent/Agent SOP.md' -> 'Agent/Agent SOP.md'（同时作为 URL 里的 doc 值） */
-function toRelativePath(modulePath) {
-  return modulePath.startsWith(MD_PREFIX) ? modulePath.slice(MD_PREFIX.length) : modulePath;
-}
-
-function createDoc(modulePath, rawContent) {
-  const id = toRelativePath(modulePath);
+function createDoc(id, content) {
   const slash = id.lastIndexOf('/');
   const fileName = slash === -1 ? id : id.slice(slash + 1);
   return {
     id,
     dir: slash === -1 ? '' : id.slice(0, slash),
     fileName,
-    title: extractTitle(rawContent) || stripExtension(fileName),
-    content: rawContent,
+    title: extractTitle(content) || stripExtension(fileName),
+    content,
   };
 }
 
-/** 读取 /md/ 下全部 Markdown 文档：顶层文件在前，同级按标题自然序 */
-export function loadDocuments() {
-  const docs = Object.entries(RAW_DOCS)
-    .map(([path, content]) => createDoc(path, typeof content === 'string' ? content : ''));
+/** 目录列表里的文件名可能是 URL 编码过的，统一还原成原始名字 */
+function decodeName(name) {
+  if (typeof name !== 'string' || !name) return '';
+  try {
+    return decodeURIComponent(name);
+  } catch {
+    return name;
+  }
+}
 
-  docs.sort((a, b) => {
-    const topLevel = (doc) => (doc.dir ? 1 : 0);
-    if (topLevel(a) !== topLevel(b)) return topLevel(a) - topLevel(b);
-    return collator.compare(a.title, b.title);
-  });
+async function readDirectory(url) {
+  const res = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = JSON.parse(await res.text());
+  if (!Array.isArray(data)) throw new Error('返回的不是目录列表');
+  return data;
+}
+
+/** 递归收集 /md/ 下所有 Markdown 文件的访问地址与相对 id */
+async function collectFiles(dirUrl, dirPath, entries, out, warnings) {
+  const subDirs = [];
+
+  for (const entry of entries) {
+    const name = decodeName(entry.name);
+    if (!name) continue;
+
+    if (entry.type === 'directory') {
+      subDirs.push({ name, url: dirUrl + encodeURIComponent(name) + '/' });
+      continue;
+    }
+    if (MD_EXT_RE.test(name)) {
+      out.push({
+        id: dirPath ? dirPath + '/' + name : name,
+        url: dirUrl + encodeURIComponent(name),
+      });
+    }
+  }
+
+  // 单个子目录拿不到列表（例如被服务器上别的 location 规则接管）不影响其它目录
+  await Promise.all(subDirs.map(async (dir) => {
+    const childPath = dirPath ? dirPath + '/' + dir.name : dir.name;
+    try {
+      await collectFiles(dir.url, childPath, await readDirectory(dir.url), out, warnings);
+    } catch (error) {
+      warnings.push(dir.name + ' (' + error.message + ')');
+    }
+  }));
+}
+
+/** 并发读取每篇文档的原文，用于生成菜单标题和全文搜索 */
+async function fetchContents(files) {
+  const docs = [];
+  for (let index = 0; index < files.length; index += FETCH_CONCURRENCY) {
+    const batch = files.slice(index, index + FETCH_CONCURRENCY);
+    const loaded = await Promise.all(batch.map(async (file) => {
+      try {
+        const res = await fetch(file.url, { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return createDoc(file.id, await res.text());
+      } catch (error) {
+        console.warn('[wiki] 读取文档失败:', file.id, error.message);
+        return null;
+      }
+    }));
+    for (const doc of loaded) if (doc) docs.push(doc);
+  }
   return docs;
+}
+
+/** 目录列表不可用时返回 null，可用时返回文档数组（可能是空数组） */
+async function loadFromServer() {
+  let rootEntries;
+  try {
+    rootEntries = await readDirectory(MD_BASE);
+  } catch {
+    return null;
+  }
+
+  const files = [];
+  const warnings = [];
+  await collectFiles(MD_BASE, '', rootEntries, files, warnings);
+  if (warnings.length) {
+    console.warn('[wiki] 这些子目录没有返回目录列表，已跳过:', warnings.join('、'));
+  }
+  return fetchContents(files);
+}
+
+function loadFromBundle() {
+  return Object.entries(BUNDLED_DOCS).map(([path, content]) => {
+    const id = path.startsWith('/md/') ? path.slice('/md/'.length) : path;
+    return createDoc(id, typeof content === 'string' ? content : '');
+  });
+}
+
+/** 顶层文件在前，同级按标题自然序 */
+function compareDocs(a, b) {
+  const topLevel = (doc) => (doc.dir ? 1 : 0);
+  if (topLevel(a) !== topLevel(b)) return topLevel(a) - topLevel(b);
+  return collator.compare(a.title, b.title);
+}
+
+/**
+ * 读取全部文档。
+ * @returns {Promise<{docs: Array, source: 'server'|'bundle'}>}
+ */
+export async function loadDocuments() {
+  const fromServer = await loadFromServer();
+  const docs = fromServer === null ? loadFromBundle() : fromServer;
+  docs.sort(compareDocs);
+  return { docs, source: fromServer === null ? 'bundle' : 'server' };
 }
 
 /** 把平铺的文档列表组织成目录树，保留 /md/ 下的子目录层级 */

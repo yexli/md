@@ -2,8 +2,10 @@
 
 > 文件即知识库，Markdown 即内容，Wiki 即阅读界面。
 
-读取项目根目录下 `/md/` 里的 Markdown 文件，自动生成一个 Wiki 阅读界面。
-没有数据库、没有后端接口，Markdown 文件本身就是数据源。
+读取 `/md/` 目录里的 Markdown 文件，自动生成一个 Wiki 阅读界面。
+没有数据库、没有后端接口、没有构建脚本——Markdown 文件本身就是数据源。
+
+部署之后往服务器的 `md/` 目录里丢一个 `.md` 文件，**刷新页面就能看到**（需要服务器开启目录列表，见「部署」一节）。
 
 ---
 
@@ -38,7 +40,13 @@ npm run preview    # 本地预览构建产物
     └── architecture.svg
 ```
 
-**不需要修改任何代码。** 开发模式下新增或删除文件都会立即生效。
+**不需要修改任何代码，也不需要重新构建。**
+
+程序启动时读一次 `/md/` 的目录列表，读到什么就显示什么：
+
+- **服务器支持目录列表**（nginx 开 `autoindex_format json`，见「部署」一节）：往 `md/` 里丢文件立刻生效
+- **服务器不支持**（对象存储、GitHub Pages 等）：回退到 `npm run build` 时打包进 JS 的那份文档快照，新增文档需要重新构建
+- **本地开发**（`npm run dev`）：开发服务器自带同样的目录列表，行为与线上一致
 
 | 规则 | 说明 |
 | --- | --- |
@@ -55,7 +63,7 @@ npm run preview    # 本地预览构建产物
 wiki阅读器/
 ├── md/                          ← 唯一的数据源，放 Markdown 的地方
 ├── index.html                   ← 页面骨架（顶栏 / 侧栏 / 阅读区）
-├── vite.config.js               ← 构建配置 + 把 md/ 下的图片复制进产物
+├── vite.config.js               ← 构建配置：复制整个 md/ 目录、本地目录列表中间件
 └── src/
     ├── main.js                  ← 入口
     ├── App.js                   ← 装配模块，管理 URL、阅读记忆、移动端抽屉
@@ -65,7 +73,7 @@ wiki阅读器/
     │   ├── markdownViewer.js    ← 正文渲染、代码复制、站内链接跳转
     │   └── copyButton.js        ← 复制与轻提示
     ├── utils/
-    │   ├── documentLoader.js    ← 扫描 /md/、提取标题、构建目录树
+    │   ├── documentLoader.js    ← 读取 /md/（目录列表或构建快照）、提取标题、构建目录树
     │   ├── markdownRenderer.js  ← Markdown → 安全 HTML
     │   └── wikiUrl.js           ← ?doc= 状态的读写
     └── styles/main.css          ← 全部样式
@@ -123,7 +131,7 @@ Markdown 里的相对路径，**以当前文件所在目录为基准**：
 [架构](../开发指南/架构设计.md)   <!-- 站内链接，点击后无刷新切换 -->
 ```
 
-外链自动新窗口打开。图片可以放在 `md/` 目录里的任何位置，构建时会被复制到产物中。
+外链自动新窗口打开。图片可以放在 `md/` 目录里的任何位置，会被原样发布到 `/md/` 下。
 
 ---
 
@@ -137,9 +145,11 @@ Markdown 里的相对路径，**以当前文件所在目录为基准**：
 | `highlight.js` | 代码语法高亮 |
 | `dompurify` | HTML 白名单过滤 |
 
-构建工具是 Vite。文档发现用 Vite 的 glob 导入完成：
+构建工具是 Vite，只在开发和构建时用，产物是纯静态文件。文档发现是两级策略：
 
 ```js
+// 首选：读服务器 /md/ 的目录列表（nginx autoindex_format json，或本地开发服务器的等价中间件）
+// 回退：读构建时打包进 JS 的快照
 import.meta.glob('/md/**/*.{md,markdown}', { query: '?raw', import: 'default', eager: true });
 ```
 
@@ -161,14 +171,33 @@ Cloudflare Pages、Vercel、Netlify、腾讯云 EdgeOne Pages 都可以，构建
 | 输出目录 | `dist` |
 | Node 版本 | 由 `.nvmrc` 决定（22） |
 
-### 静态服务器 / 对象存储
-
-本地构建后上传 `dist/` 内容到腾讯云 COS、阿里云 OSS（开启静态网站模式）或 Nginx：
+### 静态服务器（Nginx / 宝塔面板）
 
 ```bash
 npm run build
-# 把 dist/ 里的 index.html、assets/、md/ 原样传到站点根目录
 ```
+
+把 `dist/` 里的 **index.html、assets/、md/** 三项传到站点根目录（注意别多套一层 `dist`）。服务器上不需要 Node。
+
+想让**往服务器 `md/` 目录里丢文件就即时生效**，给 nginx 加两行：
+
+```nginx
+location /md/ {
+    autoindex on;
+    autoindex_format json;
+}
+
+# 图片缓存：正则只匹配到文件结尾，别写成 ^/md/images/，那样会把目录请求也截走
+location ~* ^/md/.*\.(png|jpe?g|gif|svg|webp|ico)$ {
+    expires 7d;
+}
+```
+
+`autoindex_format json` 需要 nginx 1.7.9 以上（宝塔、各大面板自带的版本都满足）。没配这两行站点也能正常跑，只是新增文档后需要重新构建上传。
+
+### 对象存储
+
+腾讯云 COS、阿里云 OSS 这类没有目录列表能力的托管，直接传 `dist/` 内容即可，新增文档后重新构建上传。
 
 ### GitHub Pages
 
@@ -189,13 +218,18 @@ npm run build -- --base=/wiki/
 
 ### 加文档之后
 
-`/md/` 的内容在**构建时**打包进 JS，所以云端加文档必须重新部署一次：
-本地改完 push（触发平台重新构建），或重新 `npm run build` 后覆盖上传 `dist/`。
+| 场景 | 做法 |
+| --- | --- |
+| nginx 开了 `autoindex`（本项目的推荐配置） | 直接把 `.md` 传进服务器的 `md/` 目录，刷新页面即生效，**不用构建、不用重启** |
+| 对象存储 / GitHub Pages / 托管平台 | 内容在构建时打包进 JS，需要重新构建上传，或 push 让平台重新构建 |
+| 本地开发 | 新文件即时生效，开发服务器提供同样的目录列表 |
 
 ---
 
 ## 说明
 
-- 文档内容会在构建时打包进 JS，适合个人到中小团队的文档规模；如果 `/md/` 长到几十 MB，再考虑改成按需加载
-- 部署到子路径时，需要相应调整 `vite.config.js` 的 `base`
+- 服务器模式下启动时会把 `/md/` 里所有文档读进内存（菜单标题和全文搜索都需要），几十到几百篇都很轻
+- 回退模式下文档内容打包进 JS，产物约 320 KB（gzip 约 124 KB）
+- `dist/` 里包含 `md/` 目录的完整副本（含 `.md` 原文），这是运行时读取的前提；纯静态托管用不到它也不受影响
+- 部署到子路径时用 `npm run build -- --base=/xxx/`，`base` 会同时作用于文档读取路径和图片
 - `/md/` 下的测试文件（`test-*.md`、`sub/`）是自测样例，随时可以删掉
