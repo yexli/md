@@ -5,7 +5,7 @@
 
 :root {
   --topbar-h: 56px;
-  --sidebar-w: 280px;
+  --sidebar-w: 236px;
   --content-max: 920px;
 
   --bg: #ffffff;
@@ -274,7 +274,7 @@ button { font-family: inherit; }
   height: calc(100vh - var(--topbar-h));
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 16px 10px 48px;
+  padding: 14px 8px 40px;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border);
 }
@@ -312,7 +312,7 @@ button { font-family: inherit; }
 
 @media (min-width: 1680px) {
   .main { padding: 52px 48px 140px; }
-  .toc { flex: 0 0 248px; width: 248px; }
+  .toc { flex: 0 0 216px; width: 216px; }
 }
 
 /* ----------------------------------------------------------- 目录树 --- */
@@ -320,8 +320,8 @@ button { font-family: inherit; }
 .tree { margin: 0; padding: 0; list-style: none; }
 
 .tree--nested {
-  margin-left: 9px;
-  padding-left: 8px;
+  margin-left: 6px;
+  padding-left: 7px;
   border-left: 1px solid var(--border);
 }
 
@@ -330,26 +330,30 @@ button { font-family: inherit; }
 .tree__toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   width: 100%;
-  margin: 2px 0;
-  padding: 7px 10px;
+  margin: 8px 0 1px;
+  padding: 4px 8px;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--text-secondary);
-  font-size: 12.5px;
+  color: var(--text-muted);
+  font-size: 11.5px;
   font-weight: 650;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   text-align: left;
   cursor: pointer;
+  transition: color 0.14s ease;
 }
 
-.tree__toggle:hover { background: var(--bg-hover); color: var(--text); }
+.tree__toggle:hover { color: var(--text-secondary); }
 
 .tree__chevron {
   flex: none;
+  width: 10px;
+  height: 10px;
   color: var(--text-muted);
+  opacity: 0.75;
   transform: rotate(90deg);
   transition: transform 0.16s ease;
 }
@@ -363,33 +367,38 @@ button { font-family: inherit; }
 }
 
 .tree__link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 1px 0;
-  padding: 7px 10px;
+  position: relative;
+  display: block;
+  margin: 0;
+  padding: 5px 8px 5px 15px;
   border-radius: var(--radius-sm);
+  overflow: hidden;
   color: var(--text-secondary);
-  font-size: 13.5px;
+  font-size: 13px;
+  line-height: 1.55;
   text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition: background 0.14s ease, color 0.14s ease;
 }
 
 .tree__link:hover { background: var(--bg-hover); color: var(--text); }
 
 .tree__link.is-active {
-  background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
 }
 
-.tree__icon { flex: none; opacity: 0.65; }
-.tree__link.is-active .tree__icon { opacity: 1; }
-
-.tree__label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.tree__link.is-active::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  width: 2px;
+  height: 14px;
+  margin-top: -7px;
+  border-radius: 1px;
+  background: var(--accent);
 }
 
 .sidebar__empty {
@@ -407,18 +416,18 @@ button { font-family: inherit; }
   display: none;
   position: sticky;
   top: var(--topbar-h);
-  flex: 0 0 232px;
-  width: 232px;
+  flex: 0 0 196px;
+  width: 196px;
   max-height: calc(100vh - var(--topbar-h));
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 46px 22px 56px 0;
+  padding: 44px 16px 56px 0;
 }
 
 .toc__title {
-  margin: 0 0 10px;
+  margin: 0 0 8px 3px;
   color: var(--text-muted);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 650;
   letter-spacing: 0.06em;
 }
@@ -431,20 +440,21 @@ button { font-family: inherit; }
 
 /* 每层嵌套各带一条竖线，缩进由嵌套自然形成 */
 .toc__list--nested {
-  margin-left: 5px;
-  padding-left: 9px;
+  margin-left: 4px;
+  padding-left: 7px;
   border-left: 1px solid var(--border);
 }
 
 .toc__item { margin: 0; }
 
 .toc__link {
+  position: relative;
   display: block;
-  padding: 4px 7px;
-  border-radius: 5px;
+  padding: 3px 6px 3px 10px;
+  border-radius: 4px;
   color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12.5px;
+  line-height: 1.55;
   text-decoration: none;
   transition: color 0.14s ease, background 0.14s ease;
 }
@@ -458,27 +468,37 @@ button { font-family: inherit; }
 
 .toc__item--1 > .toc__link {
   color: var(--text);
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 650;
 }
 
 /* 一级标题之间留出分组间距 */
-.toc__item--1:not(:first-child) > .toc__link { margin-top: 10px; }
+.toc__item--1:not(:first-child) > .toc__link { margin-top: 9px; }
 
-.toc__item--2 > .toc__link { font-size: 13px; }
-
-.toc__item--3 > .toc__link { font-size: 12.5px; }
+.toc__item--3 > .toc__link { font-size: 12px; }
 
 .toc__item--4 > .toc__link {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 11.5px;
 }
 
-/* 放在分级规则之后，保证当前章节的高亮优先级最高 */
+/* 当前章节：主色文字 + 一条细竖条，放在分级规则之后保证优先级最高 */
 .toc__link.is-active {
-  background: var(--accent-soft);
+  background: transparent;
   color: var(--accent);
   font-weight: 600;
+}
+
+.toc__link.is-active::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 2px;
+  height: 13px;
+  margin-top: -6.5px;
+  border-radius: 1px;
+  background: var(--accent);
 }
 
 .toc::-webkit-scrollbar { width: 10px; }
@@ -784,7 +804,7 @@ body.is-copying .code-block__bar { display: none; }
     bottom: 0;
     left: 0;
     z-index: 45;
-    width: min(304px, 84vw);
+    width: min(268px, 82vw);
     height: auto;
     transform: translateX(-100%);
     transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);

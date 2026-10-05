@@ -91,10 +91,7 @@ function renderLevel(node, parentPath, collapsed, onSelect) {
     link.href = docSearch(doc.id);
     link.dataset.docId = doc.id;
     link.title = doc.id;
-    link.innerHTML = '<svg class="tree__icon" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">'
-      + '<path d="M4 1.5h5.5L13 5v9.5H4z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>'
-      + '<path d="M9.2 1.6V5H12.8" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>'
-      + '<span class="tree__label">' + escapeText(doc.title) + '</span>';
+    link.textContent = doc.title;
     link.addEventListener('click', (event) => {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
       event.preventDefault();
