@@ -6,7 +6,7 @@
 #       然后在宝塔「计划任务」里建一个 Shell 脚本任务定时执行，也可以手动跑一次。
 #
 # 前提：服务器上已经克隆过本仓库，例如
-#       cd /www/wwwroot && git clone <仓库地址> agent-plan
+#       cd /www/wwwroot && git clone https://github.com/yexli/md.git md
 #
 # 说明：md/ 目录是运行时读取的，同步完刷新页面即生效，不需要构建、不需要重启。
 #       界面代码（index.html / assets/）是构建产物，只在 src/ 改动时才需要重新生成，
@@ -14,7 +14,7 @@
 #
 set -euo pipefail
 
-REPO_DIR="${REPO_DIR:-/www/wwwroot/agent-plan}"
+REPO_DIR="${REPO_DIR:-/www/wwwroot/md}"
 SITE_DIR="${SITE_DIR:-/www/wwwroot/md.oneyer.cc}"
 
 log() { echo "[$(date '+%F %T')] $*"; }
