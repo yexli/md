@@ -175,11 +175,16 @@ Cloudflare Pages、Vercel、Netlify、腾讯云 EdgeOne Pages 都可以，构建
 
 ### 静态服务器（Nginx / 宝塔面板）
 
+服务器上的 `md/` 是你自己的文档，**更新界面时不该去动它**。所以分两步：
+
 ```bash
 npm run build
+python deploy/pack.py      # 生成不含 md/ 的部署包
 ```
 
-把 `dist/` 里的 **index.html、assets/、md/** 三项传到站点根目录（注意别多套一层 `dist`）。服务器上不需要 Node。
+产物是 `wiki-dist.zip` 和 `wiki-dist.tar.gz`，里面**只有 `index.html` 和 `assets/`**，解压到站点根目录即完成更新，服务器上已有的 `md/` 原封不动。需要连本地文档一起打包时加 `--with-md`。
+
+服务器上不需要 Node。文件名全是 ASCII，任何解压工具都不会出现中文乱码（这曾经是 zip 解压的老问题，现在连碰都碰不到了）。
 
 想让**往服务器 `md/` 目录里丢文件就即时生效**，给 nginx 加两行：
 
