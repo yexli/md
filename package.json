@@ -1,0 +1,20 @@
+{
+  "name": "markdown-wiki",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "轻量级本地 Markdown Wiki 阅读器：读取 /md/ 目录，生成 Wiki 阅读界面",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.7",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.2"
+  }
+}

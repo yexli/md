@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="320" viewBox="0 0 720 320" role="img" aria-label="Markdown Wiki 架构示意图">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fbfcfd"/>
+      <stop offset="100%" stop-color="#f4f6f8"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#9aa4b0"/>
+    </marker>
+  </defs>
+
+  <rect width="720" height="320" rx="14" fill="url(#bg)" stroke="#e2e6ea"/>
+
+  <text x="34" y="44" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-size="17" font-weight="600" fill="#1f2328">Markdown Wiki · 数据流</text>
+  <text x="34" y="66" font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif" font-size="12" fill="#7b858f">文件即数据源 · 构建期扫描 · 无后端</text>
+
+  <g font-family="Segoe UI, PingFang SC, Microsoft YaHei, sans-serif">
+    <g>
+      <rect x="34" y="104" width="150" height="66" rx="10" fill="#ffffff" stroke="#dfe3e8"/>
+      <text x="109" y="132" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">/md/*.md</text>
+      <text x="109" y="152" font-size="11" fill="#7b858f" text-anchor="middle">Markdown 文件</text>
+    </g>
+
+    <g>
+      <rect x="230" y="104" width="150" height="66" rx="10" fill="#ffffff" stroke="#dfe3e8"/>
+      <text x="305" y="132" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">Document Loader</text>
+      <text x="305" y="152" font-size="11" fill="#7b858f" text-anchor="middle">扫描 / 标题 / 目录树</text>
+    </g>
+
+    <g>
+      <rect x="426" y="104" width="150" height="66" rx="10" fill="#ffffff" stroke="#dfe3e8"/>
+      <text x="501" y="132" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">Markdown Parser</text>
+      <text x="501" y="152" font-size="11" fill="#7b858f" text-anchor="middle">渲染 + 白名单过滤</text>
+    </g>
+
+    <g>
+      <rect x="230" y="222" width="150" height="66" rx="10" fill="#ffffff" stroke="#dfe3e8"/>
+      <text x="305" y="250" font-size="13" font-weight="600" fill="#1f2328" text-anchor="middle">Sidebar</text>
+      <text x="305" y="270" font-size="11" fill="#7b858f" text-anchor="middle">菜单 · 高亮 · 搜索</text>
+    </g>
+
+    <g>
+      <rect x="426" y="222" width="150" height="66" rx="10" fill="#eef3fd" stroke="#c9dbfb"/>
+      <text x="501" y="250" font-size="13" font-weight="600" fill="#2f6feb" text-anchor="middle">Wiki 阅读界面</text>
+      <text x="501" y="270" font-size="11" fill="#6b8fd4" text-anchor="middle">复制 · 图片 · 响应式</text>
+    </g>
+  </g>
+
+  <g stroke="#9aa4b0" stroke-width="1.6" fill="none" marker-end="url(#arrow)">
+    <path d="M184 137 H224"/>
+    <path d="M380 137 H420"/>
+    <path d="M305 170 V216"/>
+    <path d="M380 255 H420"/>
+  </g>
+</svg>

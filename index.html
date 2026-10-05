@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="description" content="Markdown 文件即知识库，Wiki 即阅读界面" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%9A%3C/text%3E%3C/svg%3E" />
+    <title>Markdown Wiki</title>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <button id="menu-toggle" class="icon-btn topbar__menu" type="button" aria-label="打开文档目录" aria-expanded="false" aria-controls="sidebar">
+          <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+
+        <a class="topbar__brand" href="./" id="brand">
+          <span class="topbar__logo" aria-hidden="true">&#128218;</span>
+          <span class="topbar__title">Markdown Wiki</span>
+        </a>
+
+        <div class="search" id="search">
+          <div class="search__box">
+            <svg class="search__icon" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M13.2 13.2 17 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            <input id="search-input" class="search__input" type="search" placeholder="搜索文档..." autocomplete="off" spellcheck="false" aria-label="搜索文档" aria-controls="search-results" aria-expanded="false" />
+            <button id="search-clear" class="search__clear" type="button" aria-label="清除搜索" hidden>&#215;</button>
+          </div>
+          <div id="search-results" class="search-results" role="listbox" aria-label="搜索结果" hidden></div>
+        </div>
+
+        <div class="topbar__actions">
+          <button id="copy-all" class="btn btn--ghost" type="button" aria-label="复制全文" title="复制当前文档的纯文本内容">
+            <span class="btn__icon" aria-hidden="true">&#128203;</span><span class="btn__text">复制全文</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="layout">
+        <div id="sidebar-mask" class="sidebar-mask" hidden></div>
+        <aside id="sidebar" class="sidebar" aria-label="文档目录">
+          <nav id="doc-tree" class="doc-tree"></nav>
+        </aside>
+        <main id="main" class="main">
+          <article id="doc" class="doc" aria-live="polite"></article>
+        </main>
+      </div>
+
+      <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
