@@ -427,32 +427,58 @@ button { font-family: inherit; }
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* 每层嵌套各带一条竖线，缩进由嵌套自然形成 */
+.toc__list--nested {
+  margin-left: 5px;
+  padding-left: 9px;
   border-left: 1px solid var(--border);
 }
 
+.toc__item { margin: 0; }
+
 .toc__link {
   display: block;
-  margin-left: -1px;
-  padding: 4px 0 4px 12px;
-  border-left: 2px solid transparent;
+  padding: 4px 7px;
+  border-radius: 5px;
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.5;
   text-decoration: none;
-  transition: color 0.14s ease, border-color 0.14s ease;
+  transition: color 0.14s ease, background 0.14s ease;
 }
 
-.toc__link:hover { color: var(--text); }
+.toc__link:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+}
 
+/* ---- 按 # / ## / ### / #### 逐级区分 ---- */
+
+.toc__item--1 > .toc__link {
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+/* 一级标题之间留出分组间距 */
+.toc__item--1:not(:first-child) > .toc__link { margin-top: 10px; }
+
+.toc__item--2 > .toc__link { font-size: 13px; }
+
+.toc__item--3 > .toc__link { font-size: 12.5px; }
+
+.toc__item--4 > .toc__link {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* 放在分级规则之后，保证当前章节的高亮优先级最高 */
 .toc__link.is-active {
-  border-left-color: var(--accent);
+  background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
-}
-
-.toc__item--3 > .toc__link {
-  padding-left: 24px;
-  font-size: 12.5px;
 }
 
 .toc::-webkit-scrollbar { width: 10px; }

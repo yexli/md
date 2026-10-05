@@ -6,3 +6,6 @@ dist/
 # 本地生成的部署包
 *.zip
 *.tar.gz
+
+# 本地验证产物
+.verify/
