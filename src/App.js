@@ -10,7 +10,8 @@ import { createSidebar } from './components/sidebar.js';
 import { createViewer } from './components/markdownViewer.js';
 import { createSearch } from './components/search.js';
 import { createToc } from './components/toc.js';
-import { copyWithFeedback } from './components/copyButton.js';
+import { copyWithFeedback, showToast } from './components/copyButton.js';
+import { downloadDocument } from './components/downloadButton.js';
 
 const LAST_DOC_KEY = 'wiki:last-doc';
 const MOBILE_QUERY = '(max-width: 1023px)';
@@ -20,6 +21,7 @@ export function startApp() {
   const maskEl = document.getElementById('sidebar-mask');
   const menuToggle = document.getElementById('menu-toggle');
   const copyAllBtn = document.getElementById('copy-all');
+  const downloadBtn = document.getElementById('download-doc');
   const docEl = document.getElementById('doc');
 
   const isMobile = () => window.matchMedia(MOBILE_QUERY).matches;
@@ -72,9 +74,11 @@ export function startApp() {
     createSearch({ docs, onSelect: (id) => openDoc(id) });
 
     let currentId = '';
+    let currentDoc = null;
 
     function render(doc, id) {
       currentId = id || '';
+      currentDoc = doc || null;
       if (doc) {
         viewer.show(doc);
         toc.update(docEl);
@@ -105,6 +109,14 @@ export function startApp() {
 
     copyAllBtn.addEventListener('click', () => {
       copyWithFeedback(viewer.text(), copyAllBtn.querySelector('.btn__text'), '当前文档没有可复制的内容');
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if (!currentDoc || !currentDoc.content.trim()) {
+        showToast('当前文档没有可下载的内容');
+        return;
+      }
+      downloadDocument(currentDoc);
     });
 
     document.getElementById('brand').addEventListener('click', (event) => {
